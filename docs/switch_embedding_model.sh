@@ -32,23 +32,18 @@ echo "=========================================="
 echo ""
 
 # 1. 显示当前配置的模型
-echo "[1/4] 当前模型配置："
+echo "[1/3] 当前模型配置："
 grep "DEFAULT_EMBEDDING_MODEL" mempalace/config.py
 echo ""
 
 # 2. 删除旧的 palace 缓存
-echo "[2/4] 删除旧缓存: ${PALACE_PATH}"
+echo "[2/3] 删除旧缓存: ${PALACE_PATH}"
 rm -rf "${PALACE_PATH}"
 echo "  已删除"
 echo ""
 
-# 3. 重新 init
-echo "[3/4] 重新 init: ${MINE_DIR}"
-mempalace init "${MINE_DIR}"
-echo ""
-
-# 4. 重新 mine
-echo "[4/4] 重新 mine: ${MINE_DIR} ${WING_ARG}"
+# 3. 重新 mine（不需要重新 init，init 只生成 yaml 配置，跟模型无关）
+echo "[3/3] 重新 mine: ${MINE_DIR} ${WING_ARG}"
 mempalace mine "${MINE_DIR}" ${WING_ARG}
 echo ""
 

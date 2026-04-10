@@ -209,8 +209,15 @@ def cmd_repair(args):
     shutil.copytree(palace_path, backup_path)
 
     print("  Rebuilding collection...")
+    from mempalace.config import get_embedding_function
+
+    ef = get_embedding_function()
     client.delete_collection("mempalace_drawers")
-    new_col = client.create_collection("mempalace_drawers")
+    new_col = client.create_collection(
+        "mempalace_drawers",
+        metadata={"hnsw:space": "cosine"},
+        embedding_function=ef,
+    )
 
     filed = 0
     for i in range(0, len(all_ids), batch_size):
@@ -335,7 +342,14 @@ def cmd_compress(args):
     # Store compressed versions (unless dry-run)
     if not args.dry_run:
         try:
-            comp_col = client.get_or_create_collection("mempalace_compressed")
+            from mempalace.config import get_embedding_function
+
+            ef = get_embedding_function()
+            comp_col = client.get_or_create_collection(
+                "mempalace_compressed",
+                metadata={"hnsw:space": "cosine"},
+                embedding_function=ef,
+            )
             for doc_id, compressed, meta, stats in compressed_entries:
                 comp_meta = dict(meta)
                 comp_meta["compression_ratio"] = round(stats["ratio"], 1)

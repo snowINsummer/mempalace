@@ -68,12 +68,21 @@ def _get_collection(create=False):
     """Return the ChromaDB collection, caching the client between calls."""
     global _client_cache, _collection_cache
     try:
+        from mempalace.config import get_embedding_function
+
+        ef = get_embedding_function()
         if _client_cache is None:
             _client_cache = chromadb.PersistentClient(path=_config.palace_path)
         if create:
-            _collection_cache = _client_cache.get_or_create_collection(_config.collection_name)
+            _collection_cache = _client_cache.get_or_create_collection(
+                _config.collection_name,
+                metadata={"hnsw:space": "cosine"},
+                embedding_function=ef,
+            )
         elif _collection_cache is None:
-            _collection_cache = _client_cache.get_collection(_config.collection_name)
+            _collection_cache = _client_cache.get_collection(
+                _config.collection_name, embedding_function=ef
+            )
         return _collection_cache
     except Exception:
         return None

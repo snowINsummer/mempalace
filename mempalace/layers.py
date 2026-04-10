@@ -91,8 +91,11 @@ class Layer1:
     def generate(self) -> str:
         """Pull top drawers from ChromaDB and format as compact L1 text."""
         try:
+            from mempalace.config import get_embedding_function
+
+            ef = get_embedding_function()
             client = chromadb.PersistentClient(path=self.palace_path)
-            col = client.get_collection("mempalace_drawers")
+            col = client.get_collection("mempalace_drawers", embedding_function=ef)
         except Exception:
             return "## L1 — No palace found. Run: mempalace mine <dir>"
 
@@ -196,8 +199,11 @@ class Layer2:
     def retrieve(self, wing: str = None, room: str = None, n_results: int = 10) -> str:
         """Retrieve drawers filtered by wing and/or room."""
         try:
+            from mempalace.config import get_embedding_function
+
+            ef = get_embedding_function()
             client = chromadb.PersistentClient(path=self.palace_path)
-            col = client.get_collection("mempalace_drawers")
+            col = client.get_collection("mempalace_drawers", embedding_function=ef)
         except Exception:
             return "No palace found."
 
@@ -260,8 +266,11 @@ class Layer3:
     def search(self, query: str, wing: str = None, room: str = None, n_results: int = 5) -> str:
         """Semantic search, returns compact result text."""
         try:
+            from mempalace.config import get_embedding_function
+
+            ef = get_embedding_function()
             client = chromadb.PersistentClient(path=self.palace_path)
-            col = client.get_collection("mempalace_drawers")
+            col = client.get_collection("mempalace_drawers", embedding_function=ef)
         except Exception:
             return "No palace found."
 
@@ -316,8 +325,11 @@ class Layer3:
     ) -> list:
         """Return raw dicts instead of formatted text."""
         try:
+            from mempalace.config import get_embedding_function
+
+            ef = get_embedding_function()
             client = chromadb.PersistentClient(path=self.palace_path)
-            col = client.get_collection("mempalace_drawers")
+            col = client.get_collection("mempalace_drawers", embedding_function=ef)
         except Exception:
             return []
 
@@ -437,8 +449,11 @@ class MemoryStack:
 
         # Count drawers
         try:
+            from mempalace.config import get_embedding_function
+
+            ef = get_embedding_function()
             client = chromadb.PersistentClient(path=self.palace_path)
-            col = client.get_collection("mempalace_drawers")
+            col = client.get_collection("mempalace_drawers", embedding_function=ef)
             count = col.count()
             result["total_drawers"] = count
         except Exception:

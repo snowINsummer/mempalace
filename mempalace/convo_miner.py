@@ -212,12 +212,19 @@ def detect_convo_room(content: str) -> str:
 
 
 def get_collection(palace_path: str):
+    from mempalace.config import get_embedding_function
+
+    ef = get_embedding_function()
     os.makedirs(palace_path, exist_ok=True)
     client = chromadb.PersistentClient(path=palace_path)
     try:
-        return client.get_collection("mempalace_drawers")
+        return client.get_collection("mempalace_drawers", embedding_function=ef)
     except Exception:
-        return client.create_collection("mempalace_drawers")
+        return client.create_collection(
+            "mempalace_drawers",
+            metadata={"hnsw:space": "cosine"},
+            embedding_function=ef,
+        )
 
 
 def file_already_mined(collection, source_file: str) -> bool:

@@ -8,8 +8,23 @@ import json
 import os
 from pathlib import Path
 
+from chromadb.utils.embedding_functions import SentenceTransformerEmbeddingFunction
+
 DEFAULT_PALACE_PATH = os.path.expanduser("~/.mempalace/palace")
 DEFAULT_COLLECTION_NAME = "mempalace_drawers"
+DEFAULT_EMBEDDING_MODEL = "paraphrase-multilingual-MiniLM-L12-v2"
+
+_embedding_function_cache = None
+
+
+def get_embedding_function():
+    """Return a shared multilingual embedding function (cached singleton)."""
+    global _embedding_function_cache
+    if _embedding_function_cache is None:
+        _embedding_function_cache = SentenceTransformerEmbeddingFunction(
+            model_name=DEFAULT_EMBEDDING_MODEL
+        )
+    return _embedding_function_cache
 
 DEFAULT_TOPIC_WINGS = [
     "emotions",

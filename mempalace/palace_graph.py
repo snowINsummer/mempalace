@@ -22,10 +22,13 @@ import chromadb
 
 
 def _get_collection(config=None):
+    from mempalace.config import get_embedding_function
+
     config = config or MempalaceConfig()
     try:
+        ef = get_embedding_function()
         client = chromadb.PersistentClient(path=config.palace_path)
-        return client.get_collection(config.collection_name)
+        return client.get_collection(config.collection_name, embedding_function=ef)
     except Exception:
         return None
 

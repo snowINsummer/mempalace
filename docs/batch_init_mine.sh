@@ -14,23 +14,16 @@ set -e
 SERVICES_ROOT="$HOME/Documents/yostar/git/microservices"
 WING="autotest-platform"
 
-# go-zero 项目常见目录 → room 映射
-declare -A DIR_TO_ROOM=(
-    ["etc"]="etc"
-    ["internal"]="internal"
-    ["utils"]="scripts"
-    ["common"]="common"
-    ["model"]="model"
-    ["client"]="frontend"
-    ["config"]="configuration"
-    ["docs"]="documentation"
-    ["logs"]="logs"
-    ["log"]="log"
-    ["src"]="src"
-    ["team"]="team"
-    ["proto"]="proto"
-    ["tests"]="tests"
-)
+# go-zero 项目常见目录 → room 名映射函数
+get_room_base() {
+    case "$1" in
+        utils)  echo "scripts" ;;
+        client) echo "frontend" ;;
+        config) echo "configuration" ;;
+        docs)   echo "documentation" ;;
+        *)      echo "$1" ;;
+    esac
+}
 
 echo "=========================================="
 echo "  批量 init + mine"
@@ -59,12 +52,12 @@ for svc_dir in "$SERVICES_ROOT"/*/; do
         dir_name=$(basename "$subdir")
 
         # 跳过隐藏目录和非代码目录
-        [[ "$dir_name" == .* ]] && continue
-        [[ "$dir_name" == "node_modules" ]] && continue
-        [[ "$dir_name" == "__pycache__" ]] && continue
+        case "$dir_name" in
+            .*|node_modules|__pycache__) continue ;;
+        esac
 
         # 确定 room 基础名
-        room_base="${DIR_TO_ROOM[$dir_name]:-$dir_name}"
+        room_base=$(get_room_base "$dir_name")
         room_name="${svc_name}-${room_base}"
 
         ROOMS_YAML="$ROOMS_YAML

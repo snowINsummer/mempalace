@@ -12,7 +12,7 @@ from chromadb.utils.embedding_functions import SentenceTransformerEmbeddingFunct
 
 DEFAULT_PALACE_PATH = os.path.expanduser("~/.mempalace/palace")
 DEFAULT_COLLECTION_NAME = "mempalace_drawers"
-DEFAULT_EMBEDDING_MODEL = "paraphrase-multilingual-mpnet-base-v2"
+DEFAULT_EMBEDDING_MODEL = "paraphrase-multilingual-MiniLM-L12-v2"
 
 _embedding_function_cache = None
 

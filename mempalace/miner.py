@@ -17,6 +17,8 @@ from collections import defaultdict
 
 import chromadb
 
+from .palace import SKIP_DIRS, get_collection, file_already_mined
+
 READABLE_EXTENSIONS = {
     ".txt",
     ".md",
@@ -40,32 +42,6 @@ READABLE_EXTENSIONS = {
     ".toml",
 }
 
-SKIP_DIRS = {
-    ".git",
-    "node_modules",
-    "__pycache__",
-    ".venv",
-    "venv",
-    "env",
-    "dist",
-    "build",
-    ".next",
-    "coverage",
-    ".mempalace",
-    ".ruff_cache",
-    ".mypy_cache",
-    ".pytest_cache",
-    ".cache",
-    ".tox",
-    ".nox",
-    ".idea",
-    ".vscode",
-    ".ipynb_checkpoints",
-    ".eggs",
-    "htmlcov",
-    "target",
-}
-
 SKIP_FILENAMES = {
     "mempalace.yaml",
     "mempalace.yml",
@@ -78,6 +54,7 @@ SKIP_FILENAMES = {
 CHUNK_SIZE = 800  # chars per drawer
 CHUNK_OVERLAP = 100  # overlap between chunks
 MIN_CHUNK_SIZE = 50  # skip tiny chunks
+MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB — skip files larger than this
 
 
 # =============================================================================
@@ -434,7 +411,7 @@ def add_drawer(
     collection, wing: str, room: str, content: str, source_file: str, chunk_index: int, agent: str
 ):
     """Add one drawer to the palace."""
-    drawer_id = f"drawer_{wing}_{room}_{hashlib.md5((source_file + str(chunk_index)).encode(), usedforsecurity=False).hexdigest()[:16]}"
+    drawer_id = f"drawer_{wing}_{room}_{hashlib.sha256((source_file + str(chunk_index)).encode()).hexdigest()[:24]}"
     try:
         metadata = {
             "wing": wing,
@@ -477,7 +454,7 @@ def process_file(
 
     # Skip if already filed
     source_file = str(filepath)
-    if not dry_run and file_already_mined(collection, source_file):
+    if not dry_run and file_already_mined(collection, source_file, check_mtime=True):
         return 0, None
 
     try:
@@ -495,6 +472,16 @@ def process_file(
     if dry_run:
         print(f"    [DRY RUN] {filepath.name} → room:{room} ({len(chunks)} drawers)")
         return len(chunks), room
+
+    # Purge stale drawers for this file before re-inserting the fresh chunks.
+    # Converts modified-file re-mines from upsert-over-existing-IDs (which hits
+    # hnswlib's thread-unsafe updatePoint path and can segfault on macOS ARM
+    # with chromadb 0.6.3) into a clean delete+insert, bypassing the update
+    # path entirely.
+    try:
+        collection.delete(where={"source_file": source_file})
+    except Exception:
+        pass
 
     drawers_added = 0
     for chunk in chunks:
@@ -569,6 +556,15 @@ def scan_project(
             if respect_gitignore and active_matchers and not force_include:
                 if is_gitignored(filepath, active_matchers, is_dir=False):
                     continue
+            # Skip symlinks — prevents following links to /dev/urandom, etc.
+            if filepath.is_symlink():
+                continue
+            # Skip files exceeding size limit
+            try:
+                if filepath.stat().st_size > MAX_FILE_SIZE:
+                    continue
+            except OSError:
+                continue
             files.append(filepath)
     return files
 
